@@ -22,9 +22,15 @@ let currentStep = 1;
             setupMasks();
             updateCartDisplay();
             
-            // Inicializar seleção visual do método de pagamento (Pix por padrão)
+            // Inicializar seleção visual do método de pagamento (Pix por padrão e em primeiro lugar)
             const pixMethod = document.querySelector('.payment-method[data-payment="pix"]');
             if (pixMethod) {
+                // Mover o Pix para o topo da lista de pagamentos
+                const paymentContainer = pixMethod.parentElement;
+                if (paymentContainer) {
+                    paymentContainer.prepend(pixMethod);
+                }
+
                 pixMethod.classList.add('selected');
                 selectedPayment = 'pix';
                 
