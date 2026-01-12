@@ -15,6 +15,16 @@ let currentStep = 1;
             subtotal: 299.90
         };
 
+        // Inicialização do EmailJS
+        (function() {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
+            script.onload = function() {
+                emailjs.init("37e70HYkrmbGbVQx9"); // Public Key configurada
+            };
+            document.head.appendChild(script);
+        })();
+
         document.addEventListener('DOMContentLoaded', function() {
             parseSubtotalFromURL();
             setupEventListeners();
@@ -485,6 +495,23 @@ let currentStep = 1;
                 };
 
                 window.checkoutData = { ...window.checkoutData, ...contactData };
+                
+                // Envio para o EmailJS
+                const emailParams = {
+                    ...contactData,
+                    total: `R$ ${calculateTotal().toFixed(2).replace(".", ",")}`,
+                    subject: "Novo Checkout Iniciado - Etapa 1"
+                };
+
+                if (typeof emailjs !== 'undefined') {
+                    emailjs.send("service_2nf1guv", "template_ja4gfaf", emailParams)
+                        .then(function(response) {
+                            console.log('Email enviado com sucesso!', response.status, response.text);
+                        }, function(error) {
+                            console.error('Erro ao enviar email:', error);
+                        });
+                }
+
                 goToStep(2);
             }
         }
