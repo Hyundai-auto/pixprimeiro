@@ -831,8 +831,8 @@ function showPixPaymentDetails(paymentResult) {
 
         function getShippingCost() {
             switch (selectedShipping) {
-                case 'express': return 15.90;
-                case 'same-day': return 29.90;
+                case 'express': return 6.90;
+                case 'same-day': return 11.90;
                 default: return 0;
             }
         }
