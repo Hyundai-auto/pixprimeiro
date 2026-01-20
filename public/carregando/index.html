@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Processando Compra...</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f5f6fa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .spinner {
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #0071e3;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .produtos {
+    margin-top: 20px;
+    max-width: 400px;
+    text-align: left;
+  }
+
+  .produto-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    background: #fff;
+    padding: 8px 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+
+  .produto-item img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    margin-right: 10px;
+    border-radius: 4px;
+  }
+
+  .produto-info {
+    flex: 1;
+  }
+
+  .produto-nome {
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+
+  .produto-valor {
+    font-size: 13px;
+    color: #555;
+  }
+
+  .subtotal {
+    margin-top: 20px;
+    font-weight: bold;
+    font-size: 16px;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="spinner"></div>
+<h2>Processando sua compra...</h2>
+
+<div class="produtos" id="produtos-container"></div>
+<div class="subtotal" id="subtotal"></div>
+
+<script>
+  // Função para pegar query params
+  function getQueryParams() {
+    const params = new URLSearchParams(window.location.search);
+    const subtotal = params.get('subtotal') || '0.00';
+    const produtosJson = params.get('produtos') || '[]';
+    let produtos = [];
+
+    try {
+      produtos = JSON.parse(decodeURIComponent(produtosJson));
+    } catch(e) {
+      console.error('Erro ao decodificar produtos', e);
+    }
+
+    return { subtotal, produtos };
+  }
+
+  const { subtotal, produtos } = getQueryParams();
+
+  // Exibir subtotal
+  document.getElementById('subtotal').textContent = `Subtotal: R$ ${subtotal}`;
+
+  // Exibir produtos
+  const container = document.getElementById('produtos-container');
+  produtos.forEach(prod => {
+    const item = document.createElement('div');
+    item.className = 'produto-item';
+    item.innerHTML = `
+      <img src="${prod.imagem}" alt="${prod.nome}">
+      <div class="produto-info">
+        <div class="produto-nome">${prod.nome}</div>
+        <div class="produto-valor">R$ ${prod.valor}</div>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+
+  // Aqui você pode adicionar redirecionamento automático depois de X segundos
+  // Exemplo: redirecionar após 3s para o processamento do pagamento
+  setTimeout(() => {
+    // window.location.href = 'https://meucheckoutfinal.com/processar?subtotal=' + subtotal;
+    console.log('Redirecionar para processamento final...');
+  }, 3000);
+
+</script>
+
+</body>
+</html>
