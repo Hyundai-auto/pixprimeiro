@@ -61,7 +61,7 @@
             background: var(--white);
             padding: 20px;
             box-shadow: var(--shadow-sm);
-            position: sticky;
+            position: static;
             top: 0;
             z-index: 100;
         }
@@ -118,7 +118,7 @@
         .order-summary-mobile {
             background: var(--white);
             border-bottom: 1px solid var(--gray-200);
-            position: sticky;
+            position: static;
             top: 80px;
             z-index: 90;
         }
@@ -831,7 +831,7 @@
                 padding: 24px;
                 box-shadow: var(--shadow-sm);
                 height: fit-content;
-                position: sticky;
+                position: static;
                 top: 20px;
             }
         }
