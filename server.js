@@ -15,6 +15,7 @@ app.use(cors( ));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// ...
 app.post('/api/payments/:method', async (req, res) => {
     const { method } = req.params;
     const paymentData = req.body;
@@ -29,8 +30,20 @@ app.post('/api/payments/:method', async (req, res) => {
         });
         res.status(response.status).json(response.data);
     } catch (error) {
-        res.status(error.response ? error.response.status : 500).json(error.response ? error.response.data : { message: 'Erro' });
+        // Log detalhado do erro no console do servidor
+        console.error('Erro ao processar pagamento na PayEvo:', error.response ? error.response.data : error.message);
+
+        // Resposta mais informativa para o frontend
+        if (error.response) {
+            res.status(error.response.status).json({
+                message: 'Erro na comunicação com o gateway de pagamento.',
+                details: error.response.data
+            });
+        } else {
+            res.status(500).json({ message: 'Erro interno no servidor.' });
+        }
     }
 });
+// ...
 
 app.listen(PORT, () => console.log(`Rodando na porta ${PORT}`));
