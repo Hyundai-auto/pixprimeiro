@@ -1,4 +1,3 @@
-
 let currentStep = 1;
         let selectedShipping = 'standard';
         let selectedPayment = 'pix';
