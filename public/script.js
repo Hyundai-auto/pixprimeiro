@@ -1,6 +1,6 @@
 /**
- * Script Robusto para Carregar Produtos no Resumo do Pedido
- * Funciona em Desktop e Mobile
+ * Script Final para Carregar Produtos no Resumo do Pedido
+ * Funciona em Desktop e Mobile com detecção melhorada
  */
 
 (function() {
@@ -41,6 +41,8 @@
             if (containerDesktop) {
                 criarElementosProdutos(produtos, containerDesktop, 'desktop');
                 console.log('✅ Produtos inseridos no DESKTOP');
+            } else {
+                console.warn('⚠️ Container desktop não encontrado');
             }
 
             // 4. Inserir produtos no MOBILE
@@ -48,6 +50,8 @@
             if (containerMobile) {
                 criarElementosProdutos(produtos, containerMobile, 'mobile');
                 console.log('✅ Produtos inseridos no MOBILE');
+            } else {
+                console.warn('⚠️ Container mobile não encontrado');
             }
 
             // 5. Atualizar totais
@@ -96,7 +100,7 @@
         return null;
     }
 
-    // Função para encontrar container no MOBILE
+    // Função para encontrar container no MOBILE - VERSÃO CORRIGIDA
     function encontrarContainerMobile() {
         // Tentar encontrar container existente
         let container = document.getElementById('productsListMobile');
@@ -105,29 +109,45 @@
             return container;
         }
 
-        // Procurar pela estrutura mobile: .order-summary-mobile > .summary-content > .summary-content-inner
-        const summaryContentInner = document.querySelector('.order-summary-mobile .summary-content-inner');
-        if (summaryContentInner) {
-            // Procurar pelos order-totals dentro do mobile
-            const orderTotalsMobile = summaryContentInner.querySelector('.order-totals');
-            if (orderTotalsMobile) {
-                // Criar container antes dos totais
-                container = document.createElement('div');
-                container.id = 'productsListMobile';
-                container.className = 'products-list products-list-mobile';
-                orderTotalsMobile.insertAdjacentElement('beforebegin', container);
-                
-                // Inserir divisor
-                const divisor = document.createElement('div');
-                divisor.style.cssText = 'border-top: 1px solid #e5e7eb; margin: 16px 0;';
-                container.insertAdjacentElement('afterend', divisor);
-                
-                console.log('✅ Container mobile criado antes dos totais');
-                return container;
-            }
+        // Procurar pela estrutura mobile: .order-summary-mobile
+        const orderSummaryMobile = document.querySelector('.order-summary-mobile');
+        
+        if (!orderSummaryMobile) {
+            console.warn('⚠️ .order-summary-mobile não encontrado');
+            return null;
         }
 
-        return null;
+        // Procurar pelo #summaryContent dentro do mobile
+        const summaryContent = orderSummaryMobile.querySelector('#summaryContent');
+        
+        if (!summaryContent) {
+            console.warn('⚠️ #summaryContent não encontrado');
+            return null;
+        }
+
+        // Procurar pelos order-totals dentro do summaryContent
+        const orderTotalsMobile = summaryContent.querySelector('.order-totals');
+        
+        if (!orderTotalsMobile) {
+            console.warn('⚠️ .order-totals dentro de #summaryContent não encontrado');
+            return null;
+        }
+
+        // Criar container ANTES dos totais
+        container = document.createElement('div');
+        container.id = 'productsListMobile';
+        container.className = 'products-list products-list-mobile';
+        
+        // Inserir ANTES dos totais
+        orderTotalsMobile.insertAdjacentElement('beforebegin', container);
+        
+        // Inserir divisor DEPOIS dos produtos
+        const divisor = document.createElement('div');
+        divisor.style.cssText = 'border-top: 1px solid #e5e7eb; margin: 16px 0;';
+        container.insertAdjacentElement('afterend', divisor);
+        
+        console.log('✅ Container mobile criado antes dos totais');
+        return container;
     }
 
     // Função para criar elementos dos produtos
@@ -295,13 +315,16 @@
                 }
             }
 
-            // Atualizar subtotal no MOBILE
-            const subtotalElementsMobile = document.querySelectorAll('.order-summary-mobile .order-totals .total-row');
-            if (subtotalElementsMobile.length > 0) {
-                const priceSpan = subtotalElementsMobile[0].querySelector('span:last-child');
-                if (priceSpan && priceSpan.textContent === '...') {
-                    priceSpan.textContent = subtotalFormatado;
-                    console.log('✅ Subtotal mobile atualizado:', subtotalFormatado);
+            // Atualizar subtotal no MOBILE - VERSÃO CORRIGIDA
+            const summaryContent = document.querySelector('.order-summary-mobile #summaryContent');
+            if (summaryContent) {
+                const subtotalElementsMobile = summaryContent.querySelectorAll('.order-totals .total-row');
+                if (subtotalElementsMobile.length > 0) {
+                    const priceSpan = subtotalElementsMobile[0].querySelector('span:last-child');
+                    if (priceSpan && priceSpan.textContent === '...') {
+                        priceSpan.textContent = subtotalFormatado;
+                        console.log('✅ Subtotal mobile atualizado:', subtotalFormatado);
+                    }
                 }
             }
 
@@ -342,14 +365,17 @@
                 }
             });
 
-            // Atualizar total no mobile
-            const totalElementsMobile = document.querySelectorAll('.order-summary-mobile .order-totals .total-row.final');
-            totalElementsMobile.forEach(el => {
-                const priceSpan = el.querySelector('span:last-child');
-                if (priceSpan && priceSpan.textContent === '...') {
-                    priceSpan.textContent = totalFormatado;
-                }
-            });
+            // Atualizar total no mobile - VERSÃO CORRIGIDA
+            const summaryContent = document.querySelector('.order-summary-mobile #summaryContent');
+            if (summaryContent) {
+                const totalElementsMobile = summaryContent.querySelectorAll('.order-totals .total-row.final');
+                totalElementsMobile.forEach(el => {
+                    const priceSpan = el.querySelector('span:last-child');
+                    if (priceSpan && priceSpan.textContent === '...') {
+                        priceSpan.textContent = totalFormatado;
+                    }
+                });
+            }
 
             // Atualizar total no toggle mobile
             const mobileTotalPrice = document.getElementById('mobileTotalPrice');
