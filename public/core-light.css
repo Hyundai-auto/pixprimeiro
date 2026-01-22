@@ -61,7 +61,7 @@
             background: var(--white);
             padding: 20px;
             box-shadow: var(--shadow-sm);
-            position: static;
+            position: sticky;
             top: 0;
             z-index: 100;
         }
@@ -71,7 +71,7 @@
                 grid-column: 1 / -1;
                 border-radius: var(--border-radius-lg);
                 margin-bottom: 20px;
-                position: static;
+                position: sticky;
             }
         }
 
