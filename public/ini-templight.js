@@ -1,12 +1,12 @@
 /**
  * Checkout Progressivo - Script Principal
  * Fluxo UX otimizado com revelação progressiva de campos
- * Mantém todas as funcionalidades originais
+ * Idêntico ao primeiro código de referência
  */
 
 // Estado global do checkout
-let currentStep = 1;
-let selectedShipping = null; // Nenhum frete selecionado inicialmente
+let currentStep = 2; // Inicia na etapa 2 (Entrega) - Carrinho é fictício
+let selectedShipping = null;
 let selectedPayment = 'pix';
 let addressFilled = false;
 let pixTimer = null;
@@ -20,30 +20,33 @@ let cartData = {
     subtotal: 299.90
 };
 
-// Estado do fluxo progressivo (NOVO)
+// Estado do fluxo progressivo
 let flowState = {
+    emailValid: false,
     cepValid: false,
     shippingSelected: false,
-    addressComplementValid: false
+    personalDataValid: false,
+    addressComplementValid: false,
+    cpfValid: false
 };
 
-// Configuração do EmailJS
-const EMAILJS_SERVICE_ID = 'service_2nf1guv';
-const EMAILJS_TEMPLATE_ID = 'template_ja4gfaf';
-const EMAILJS_PUBLIC_KEY = '37e70HYkrmbGbVQx9';
+// Inicialização do EmailJS
+(function() {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
+    script.onload = function() {
+        emailjs.init("37e70HYkrmbGbVQx9");
+    };
+    document.head.appendChild(script);
+})();
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar EmailJS
-    emailjs.init(EMAILJS_PUBLIC_KEY);
-    
     parseSubtotalFromURL();
     setupEventListeners();
     updateProgress();
     setupMasks();
     updateCartDisplay();
     initializeProgressiveFlow();
-
-    toggleOrderSummary();
 
     // Configurar teclado numérico para campos específicos
     const numericFields = ['cpf', 'zipCode', 'phone'];
@@ -62,15 +65,17 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * Inicializa o fluxo progressivo na etapa 2
- * Esconde todas as seções exceto o CEP
+ * Inicializa o fluxo progressivo
+ * Mostra apenas a seção de contato e CEP inicialmente
  */
 function initializeProgressiveFlow() {
-    // Esconde todas as seções progressivas
+    // Esconde todas as seções exceto contato e CEP (ambas visíveis desde o início)
     const sections = [
         'shippingOptions',
+        'sectionPersonalData',
         'sectionAddressInfo',
         'sectionAddressComplement',
+        'sectionCpf',
         'sectionButton'
     ];
 
@@ -82,8 +87,25 @@ function initializeProgressiveFlow() {
         }
     });
 
+    // Garante que a seção de CEP esteja visível
+    const sectionCep = document.getElementById('sectionCep');
+    if (sectionCep) {
+        sectionCep.classList.remove('hidden');
+    }
+
     // Garante que o botão fictício esteja visível
-    updateContinueButtonVisibility();
+    const sectionContinueButton = document.getElementById('sectionContinueButton');
+    if (sectionContinueButton) {
+        sectionContinueButton.style.display = 'block';
+    }
+
+    // Foca no campo de email
+    setTimeout(() => {
+        const emailField = document.getElementById('email');
+        if (emailField) {
+            emailField.focus();
+        }
+    }, 500);
 }
 
 function parseSubtotalFromURL() {
@@ -125,8 +147,7 @@ function updateOrderTotals() {
 
 function setupEventListeners() {
     // Form submissions
-    document.getElementById('contactForm').addEventListener('submit', handleContactSubmit);
-    document.getElementById('shippingForm').addEventListener('submit', handleShippingSubmit);
+    document.getElementById('deliveryForm').addEventListener('submit', handleDeliverySubmit);
     document.getElementById('paymentForm').addEventListener('submit', handlePaymentSubmit);
 
     // Shipping options
@@ -139,6 +160,24 @@ function setupEventListeners() {
         method.querySelector('.payment-header').addEventListener('click', selectPayment);
     });
 
+    // Email field - Progressive reveal
+    const emailField = document.getElementById('email');
+    if (emailField) {
+        emailField.addEventListener('blur', handleEmailBlur);
+        emailField.addEventListener('input', function() {
+            if (this.classList.contains('error')) {
+                validateField(this);
+            }
+        });
+    }
+
+    // CEP field
+    const zipCodeField = document.getElementById('zipCode');
+    if (zipCodeField) {
+        zipCodeField.addEventListener('keyup', handleCEPLookup);
+        zipCodeField.addEventListener('blur', () => validateField(zipCodeField));
+    }
+
     // All form inputs validation
     document.querySelectorAll('.form-input').forEach(input => {
         input.addEventListener('blur', () => validateField(input));
@@ -146,21 +185,35 @@ function setupEventListeners() {
             if (input.classList.contains('error')) {
                 validateField(input);
             }
+            checkFormCompletion();
         });
     });
 
-    // CEP field - Progressive reveal
-    const zipCodeField = document.getElementById('zipCode');
-    if (zipCodeField) {
-        zipCodeField.addEventListener('keyup', handleCEPLookup);
-        zipCodeField.addEventListener('blur', () => validateField(zipCodeField));
-    }
+    // Personal data fields
+    const personalFields = ['firstName', 'lastName', 'phone'];
+    personalFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('blur', checkPersonalDataCompletion);
+            field.addEventListener('input', checkPersonalDataCompletion);
+        }
+    });
 
-    // Number field - Check completion for button reveal
-    const numberField = document.getElementById('number');
-    if (numberField) {
-        numberField.addEventListener('blur', checkAddressCompletion);
-        numberField.addEventListener('input', checkAddressCompletion);
+    // Address complement fields
+    const addressFields = ['number'];
+    addressFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('blur', checkAddressCompletion);
+            field.addEventListener('input', checkAddressCompletion);
+        }
+    });
+
+    // CPF field
+    const cpfField = document.getElementById('cpf');
+    if (cpfField) {
+        cpfField.addEventListener('blur', checkCpfCompletion);
+        cpfField.addEventListener('input', checkCpfCompletion);
     }
 
     // Botão fictício - scroll para o campo que falta
@@ -171,10 +224,32 @@ function setupEventListeners() {
 }
 
 /**
+ * Manipula o blur do campo de email
+ * Apenas valida o email (CEP já está visível desde o início)
+ */
+function handleEmailBlur() {
+    const emailField = document.getElementById('email');
+    const isValid = validateField(emailField);
+    
+    if (isValid && !flowState.emailValid) {
+        flowState.emailValid = true;
+        // CEP já está visível, não precisa revelar
+    }
+}
+
+/**
  * Manipula o clique no botão fictício
  * Faz scroll para o primeiro campo não preenchido
  */
 function handleFictitiousButtonClick() {
+    const email = document.getElementById('email');
+    if (!validateEmail(email.value)) {
+        email.focus();
+        email.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        validateField(email);
+        return;
+    }
+
     if (!flowState.cepValid) {
         const zipCode = document.getElementById('zipCode');
         zipCode.focus();
@@ -188,10 +263,39 @@ function handleFictitiousButtonClick() {
         return;
     }
     
+    if (!flowState.personalDataValid) {
+        const firstName = document.getElementById('firstName');
+        const lastName = document.getElementById('lastName');
+        const phone = document.getElementById('phone');
+        
+        if (!firstName.value.trim()) {
+            firstName.focus();
+            firstName.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+        if (!lastName.value.trim()) {
+            lastName.focus();
+            lastName.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+        if (!validatePhone(phone.value)) {
+            phone.focus();
+            phone.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+    }
+
     if (!flowState.addressComplementValid) {
         const number = document.getElementById('number');
         number.focus();
         number.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+
+    if (!flowState.cpfValid) {
+        const cpf = document.getElementById('cpf');
+        cpf.focus();
+        cpf.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
 }
@@ -215,6 +319,8 @@ function toggleOrderSummary() {
 
 /**
  * Revela uma seção com animação suave
+ * @param {string} sectionId - ID da seção a ser revelada
+ * @param {boolean} enableScroll - Se true, faz scroll para a seção (padrão: false)
  */
 function revealSection(sectionId, enableScroll = false) {
     const section = document.getElementById(sectionId);
@@ -222,6 +328,7 @@ function revealSection(sectionId, enableScroll = false) {
         section.classList.remove('hidden');
         section.classList.add('show');
         
+        // Scroll suave para a seção (apenas se habilitado)
         if (enableScroll) {
             setTimeout(() => {
                 section.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -280,11 +387,15 @@ async function handleCEPLookup() {
         if (flowState.cepValid) {
             flowState.cepValid = false;
             flowState.shippingSelected = false;
+            flowState.personalDataValid = false;
             flowState.addressComplementValid = false;
+            flowState.cpfValid = false;
             
             hideSection('shippingOptions');
+            hideSection('sectionPersonalData');
             hideSection('sectionAddressInfo');
             hideSection('sectionAddressComplement');
+            hideSection('sectionCpf');
             hideSection('sectionButton');
             
             // Remove seleção de frete
@@ -293,7 +404,11 @@ async function handleCEPLookup() {
             });
             selectedShipping = null;
             
-            updateContinueButtonVisibility();
+            // Mostra botão fictício novamente
+            const sectionContinueButton = document.getElementById('sectionContinueButton');
+            if (sectionContinueButton) {
+                sectionContinueButton.style.display = 'block';
+            }
         }
         
         const errorEl = document.getElementById('zipCodeError');
@@ -338,11 +453,11 @@ function showCEPError() {
     
     // Esconde seções subsequentes
     hideSection('shippingOptions');
+    hideSection('sectionPersonalData');
     hideSection('sectionAddressInfo');
     hideSection('sectionAddressComplement');
+    hideSection('sectionCpf');
     hideSection('sectionButton');
-    
-    updateContinueButtonVisibility();
 }
 
 /**
@@ -362,22 +477,43 @@ function selectShipping() {
     flowState.shippingSelected = true;
     updateShippingCost();
     
-    // Revela seções de endereço e complemento
-    if (!document.getElementById('sectionAddressInfo').classList.contains('show')) {
+    // Revela seções de dados pessoais, endereço e CPF (sem scroll)
+    if (!document.getElementById('sectionPersonalData').classList.contains('show')) {
+        revealSection('sectionPersonalData', false);
         revealSection('sectionAddressInfo', false);
         revealSection('sectionAddressComplement', false);
+        revealSection('sectionCpf', false); // CPF já disponível junto com endereço
         
-        // Foca no campo de número
+        // Foca no campo de nome
         setTimeout(() => {
-            const numberField = document.getElementById('number');
-            if (numberField) {
-                numberField.focus();
+            const firstNameField = document.getElementById('firstName');
+            if (firstNameField) {
+                firstNameField.focus();
             }
         }, 300);
     }
+}
+
+/**
+ * Verifica se os dados pessoais estão completos
+ */
+function checkPersonalDataCompletion() {
+    const firstName = document.getElementById('firstName');
+    const lastName = document.getElementById('lastName');
+    const phone = document.getElementById('phone');
     
-    // Verifica se já pode mostrar o botão
-    checkAddressCompletion();
+    const isValid = 
+        firstName.value.trim() !== '' &&
+        lastName.value.trim() !== '' &&
+        validatePhone(phone.value);
+    
+    if (isValid && !flowState.personalDataValid) {
+        flowState.personalDataValid = true;
+    } else if (!isValid) {
+        flowState.personalDataValid = false;
+    }
+    
+    checkFormCompletion();
 }
 
 /**
@@ -386,31 +522,84 @@ function selectShipping() {
 function checkAddressCompletion() {
     const number = document.getElementById('number');
     
-    const isValid = number && number.value.trim() !== '';
+    const isValid = number.value.trim() !== '';
     
-    if (isValid && flowState.shippingSelected) {
+    if (isValid && !flowState.addressComplementValid) {
         flowState.addressComplementValid = true;
-        revealSection('sectionButton');
-        updateContinueButtonVisibility();
-    } else {
+        // CPF já está visível junto com o endereço, não precisa revelar
+    } else if (!isValid) {
         flowState.addressComplementValid = false;
-        hideSection('sectionButton');
-        updateContinueButtonVisibility();
     }
+    
+    checkFormCompletion();
 }
 
 /**
- * Controla a visibilidade do botão Continuar fictício
+ * Verifica se o CPF está completo e válido
  */
-function updateContinueButtonVisibility() {
-    const sectionButton = document.getElementById('sectionButton');
-    const sectionContinueButton = document.getElementById('sectionContinueButton');
+function checkCpfCompletion() {
+    const cpf = document.getElementById('cpf');
+    const isValid = validateCPF(cpf.value);
     
-    if (sectionButton && sectionContinueButton) {
-        if (sectionButton.classList.contains('show')) {
+    if (isValid && !flowState.cpfValid) {
+        flowState.cpfValid = true;
+        cpf.classList.add('success');
+        cpf.classList.remove('error');
+        
+        // Revela botão de continuar e esconde o fictício
+        revealSection('sectionButton');
+        const sectionContinueButton = document.getElementById('sectionContinueButton');
+        if (sectionContinueButton) {
             sectionContinueButton.style.display = 'none';
-        } else {
-            sectionContinueButton.style.display = 'flex';
+        }
+    } else if (!isValid && flowState.cpfValid) {
+        flowState.cpfValid = false;
+        // Esconde botão real e mostra fictício
+        hideSection('sectionButton');
+        const sectionContinueButton = document.getElementById('sectionContinueButton');
+        if (sectionContinueButton) {
+            sectionContinueButton.style.display = 'block';
+        }
+    }
+    
+    checkFormCompletion();
+}
+
+/**
+ * Verifica se todo o formulário está completo
+ * Habilita/desabilita o botão de continuar
+ */
+function checkFormCompletion() {
+    const btn = document.getElementById('btnContinuePayment');
+    if (!btn) return;
+    
+    const email = document.getElementById('email');
+    const zipCode = document.getElementById('zipCode');
+    const firstName = document.getElementById('firstName');
+    const lastName = document.getElementById('lastName');
+    const phone = document.getElementById('phone');
+    const number = document.getElementById('number');
+    const cpf = document.getElementById('cpf');
+    
+    const isComplete = 
+        validateEmail(email.value) &&
+        validateZipCode(zipCode.value) &&
+        addressFilled &&
+        selectedShipping !== null &&
+        firstName.value.trim() !== '' &&
+        lastName.value.trim() !== '' &&
+        validatePhone(phone.value) &&
+        number.value.trim() !== '' &&
+        validateCPF(cpf.value);
+    
+    btn.disabled = !isComplete;
+    
+    // Mostra o botão se todos os campos anteriores estiverem preenchidos
+    if (flowState.cpfValid && !document.getElementById('sectionButton').classList.contains('show')) {
+        revealSection('sectionButton');
+        const sectionContinueButton = document.getElementById('sectionContinueButton');
+        if (sectionContinueButton) {
+            sectionContinueButton.style.display = 'none';
         }
     }
 }
@@ -486,36 +675,21 @@ function applyExpiryMask(value) {
 }
 
 function goToStep(step) {
-    if (step < currentStep || validateCurrentStep()) {
-        currentStep = step;
+    if (step === 2) {
+        // Voltando para etapa de entrega
+        currentStep = 2;
         updateStepDisplay();
         updateProgress();
         
-        // Reinicializa o fluxo progressivo ao voltar para etapa 2
-        if (step === 2) {
-            initializeProgressiveFlow();
-            // Se já tinha dados preenchidos, restaura o estado
-            if (addressFilled && selectedShipping) {
-                flowState.cepValid = true;
-                flowState.shippingSelected = true;
-                revealSection('shippingOptions');
-                revealSection('sectionAddressInfo');
-                revealSection('sectionAddressComplement');
-                
-                // Restaura seleção de frete
-                document.querySelectorAll('.shipping-option').forEach(opt => {
-                    if (opt.dataset.shipping === selectedShipping) {
-                        opt.classList.add('selected');
-                    }
-                });
-                
-                checkAddressCompletion();
-            }
+        if (window.innerWidth < 768) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-        
-        if (currentStep === 3) {
-            updateShippingCost();
-        }
+    } else if (step === 3 && validateDeliveryForm()) {
+        // Avançando para pagamento
+        currentStep = 3;
+        updateStepDisplay();
+        updateProgress();
+        updateShippingCost();
         
         if (window.innerWidth < 768) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -549,48 +723,43 @@ function updateProgress() {
         }
     });
 
+    // Calcula a largura da linha de progresso
+    // Etapa 1 (Carrinho) = 0%, Etapa 2 (Entrega) = 50%, Etapa 3 (Pagamento) = 100%
     const progressWidth = ((currentStep - 1) / (steps.length - 1)) * 100;
     progressLine.style.width = `${progressWidth}%`;
 }
 
-function validateCurrentStep() {
-    if (currentStep === 1) {
-        const form = document.getElementById('contactForm');
-        const inputs = form.querySelectorAll('input[required]');
-        let isValid = true;
+function validateDeliveryForm() {
+    const form = document.getElementById('deliveryForm');
+    const requiredFields = form.querySelectorAll('input[required]:not([type="hidden"])');
+    let isValid = true;
 
-        inputs.forEach(input => {
-            if (!validateField(input)) {
+    requiredFields.forEach(field => {
+        // Só valida campos visíveis
+        const section = field.closest('.form-section, .form-group');
+        if (section && !section.classList.contains('hidden')) {
+            if (!validateField(field)) {
                 isValid = false;
             }
-        });
+        }
+    });
 
-        return isValid;
+    if (!addressFilled) {
+        isValid = false;
+        const zipCodeInput = document.getElementById('zipCode');
+        if (!zipCodeInput.classList.contains('error')) {
+            zipCodeInput.classList.add('error');
+            document.getElementById('zipCodeError').textContent = 'Digite um CEP válido para continuar';
+            document.getElementById('zipCodeError').classList.add('show');
+        }
     }
-    
-    if (currentStep === 2) {
-        // Valida CEP
-        const zipCode = document.getElementById('zipCode');
-        if (!validateField(zipCode) || !addressFilled) {
-            return false;
-        }
-        
-        // Valida seleção de frete
-        if (!selectedShipping) {
-            alert('Por favor, selecione uma opção de entrega.');
-            return false;
-        }
-        
-        // Valida número
-        const number = document.getElementById('number');
-        if (!validateField(number)) {
-            return false;
-        }
-        
-        return true;
+
+    if (!selectedShipping) {
+        isValid = false;
+        alert('Por favor, selecione uma opção de entrega.');
     }
-    
-    return true;
+
+    return isValid;
 }
 
 function validateField(field) {
@@ -728,60 +897,16 @@ function validateCardExpiry(expiry) {
     return true;
 }
 
-// Função para enviar email via EmailJS
-async function sendEmailNotification(contactData) {
-    try {
-        const templateParams = {
-            customer_name: contactData.firstName,
-            customer_email: contactData.email,
-            customer_cpf: contactData.cpf,
-            customer_phone: contactData.phone,
-            order_subtotal: `R$ ${cartData.subtotal.toFixed(2).replace(".", ",")}`,
-            order_date: new Date().toLocaleString('pt-BR'),
-            to_name: contactData.firstName,
-            from_name: 'PagOnline',
-            message: `Novo pedido iniciado!\n\nCliente: ${contactData.firstName}\nE-mail: ${contactData.email}\nCPF: ${contactData.cpf}\nTelefone: ${contactData.phone}\nValor: R$ ${cartData.subtotal.toFixed(2).replace(".", ",")}\nData: ${new Date().toLocaleString('pt-BR')}`
-        };
-
-        const response = await emailjs.send(
-            EMAILJS_SERVICE_ID,
-            EMAILJS_TEMPLATE_ID,
-            templateParams
-        );
-
-        console.log('Email enviado com sucesso!', response.status, response.text);
-        return true;
-    } catch (error) {
-        console.error('Erro ao enviar email:', error);
-        return false;
-    }
-}
-
-async function handleContactSubmit(e) {
+async function handleDeliverySubmit(e) {
     e.preventDefault();
-    if (validateCurrentStep()) {
+    if (validateDeliveryForm()) {
         const formData = new FormData(e.target);
-        const contactData = {
+        const deliveryData = {
             email: formData.get('email'),
             firstName: formData.get('firstName'),
+            lastName: formData.get('lastName'),
+            phone: formData.get('phone'),
             cpf: formData.get('cpf'),
-            phone: formData.get('phone')
-        };
-
-        window.checkoutData = { ...window.checkoutData, ...contactData };
-        
-        // Enviar email via EmailJS (não bloqueia o fluxo)
-        sendEmailNotification(contactData);
-        
-        goToStep(2);
-    }
-}
-
-async function handleShippingSubmit(e) {
-    e.preventDefault();
-    if (validateCurrentStep()) {
-        const formData = new FormData(e.target);
-        const shippingData = {
             zipCode: formData.get('zipCode'),
             address: formData.get('address'),
             number: formData.get('number'),
@@ -792,8 +917,41 @@ async function handleShippingSubmit(e) {
             shippingMethod: selectedShipping
         };
 
-        window.checkoutData = { ...window.checkoutData, ...shippingData };
+        window.checkoutData = { ...window.checkoutData, ...deliveryData };
+        
+        // Enviar email via EmailJS (não bloqueia o fluxo)
+        sendEmailNotification(deliveryData);
+        
         goToStep(3);
+    }
+}
+
+// Função para enviar email via EmailJS
+async function sendEmailNotification(contactData) {
+    try {
+        const templateParams = {
+            customer_name: `${contactData.firstName} ${contactData.lastName}`,
+            customer_email: contactData.email,
+            customer_cpf: contactData.cpf,
+            customer_phone: contactData.phone,
+            order_subtotal: `R$ ${cartData.subtotal.toFixed(2).replace(".", ",")}`,
+            order_date: new Date().toLocaleString('pt-BR'),
+            to_name: contactData.firstName,
+            from_name: 'PagOnline',
+            message: `Novo pedido iniciado!\n\nCliente: ${contactData.firstName} ${contactData.lastName}\nE-mail: ${contactData.email}\nCPF: ${contactData.cpf}\nTelefone: ${contactData.phone}\nValor: R$ ${cartData.subtotal.toFixed(2).replace(".", ",")}\nData: ${new Date().toLocaleString('pt-BR')}`
+        };
+
+        const response = await emailjs.send(
+            'service_2nf1guv',
+            'template_ja4gfaf',
+            templateParams
+        );
+
+        console.log('Email enviado com sucesso!', response.status, response.text);
+        return true;
+    } catch (error) {
+        console.error('Erro ao enviar email:', error);
+        return false;
     }
 }
 
@@ -835,7 +993,7 @@ async function processPixPayment(orderData) {
         paymentMethod: 'PIX',
         amount: Math.round(orderData.total * 100),
         customer: {
-            name: orderData.firstName,
+            name: `${orderData.firstName} ${orderData.lastName}`,
             email: orderData.email,
             phone: orderData.phone.replace(/\D/g, ''),
             document: {
@@ -964,7 +1122,7 @@ async function processCreditCardPayment(orderData, form) {
         amount: Math.round(orderData.total * 100),
         installments: parseInt(formData.get('installments')),
         customer: {
-            name: orderData.firstName,
+            name: `${orderData.firstName} ${orderData.lastName}`,
             email: orderData.email,
             document: orderData.cpf.replace(/\D/g, ''),
             phone: orderData.phone.replace(/\D/g, '')
@@ -1030,7 +1188,7 @@ async function processBoletoPayment(orderData) {
         paymentMethod: 'BOLETO',
         amount: Math.round(orderData.total * 100),
         customer: {
-            name: orderData.firstName,
+            name: `${orderData.firstName} ${orderData.lastName}`,
             email: orderData.email,
             document: orderData.cpf.replace(/\D/g, ''),
             phone: orderData.phone.replace(/\D/g, '')
