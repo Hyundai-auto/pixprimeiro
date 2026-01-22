@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
@@ -8,8 +8,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="/cdn/cache/_sys/render_v47/core-x9a.css?v=9a1">
-<link rel="stylesheet" href="/cdn/cache/_sys/render_v47/core-x9b.css?v=9b1">
-<link rel="stylesheet" href="/cdn/cache/_sys/render_v47/core-x9c.css?v=err&retry=1">
+  <link rel="stylesheet" href="/cdn/cache/_sys/render_v47/core-x9b.css?v=9b1">
+  <link rel="stylesheet" href="/cdn/cache/_sys/render_v47/core-x9c.css?v=err&retry=1">
   <link rel="stylesheet" href="module-check.php">
   <link rel="stylesheet" href="core.install.min.css">
   <link rel="stylesheet" href="cache-v1-light.css">
@@ -94,6 +94,121 @@
         text-align: right;
         min-width: 80px;
     }
+
+    /* ============================================
+       ESTILOS PARA REVELAÇÃO PROGRESSIVA
+       ============================================ */
+    
+    /* Seções ocultas por padrão */
+    .form-section.hidden,
+    .shipping-options.hidden,
+    .address-fields.hidden,
+    .button-group.hidden {
+        display: none !important;
+        opacity: 0;
+        max-height: 0;
+        overflow: hidden;
+        transition: all 0.4s ease-out;
+    }
+
+    /* Seções visíveis com animação */
+    .form-section.show,
+    .shipping-options.show,
+    .address-fields.show,
+    .button-group.show {
+        display: block !important;
+        opacity: 1;
+        max-height: 2000px;
+        animation: slideDown 0.4s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Estilo para seções do formulário */
+    .form-section {
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .form-section:last-child {
+        border-bottom: none;
+    }
+
+    .section-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 16px;
+    }
+
+    /* Bloco de endereço automático (não editável) */
+    .address-info-block {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 16px;
+    }
+
+    .address-info-row {
+        display: flex;
+        margin-bottom: 8px;
+    }
+
+    .address-info-row:last-child {
+        margin-bottom: 0;
+    }
+
+    .address-info-label {
+        font-weight: 500;
+        color: #6b7280;
+        min-width: 100px;
+        font-size: 14px;
+    }
+
+    .address-info-value {
+        color: #111827;
+        font-size: 14px;
+    }
+
+    /* Botão continuar fictício */
+    .btn-continue-fictitious {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-continue-fictitious:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+
+    /* Linha de número e complemento */
+    .address-row-number-complement {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    @media (max-width: 480px) {
+        .address-row-number-complement {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 
 </head>
@@ -160,6 +275,7 @@
         </div>
 
         <main class="main-content">
+            <!-- ETAPA 1: CONTATO -->
             <div class="step-content active" id="step1">
                 <h2 class="step-title">Informações de Contato</h2>
                 <p class="step-subtitle">Preencha os Campos abaixo:</p>
@@ -180,12 +296,12 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label" for="cpf">CPF *</label>
-                            <input type="text" id="cpf" name="cpf" class="form-input" maxlength="14" required>
+                            <input type="text" id="cpf" name="cpf" class="form-input" maxlength="14" required inputmode="numeric">
                             <div class="error-message" id="cpfError">Digite um CPF válido</div>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="phone">Telefone *</label>
-                            <input type="tel" id="phone" name="phone" class="form-input" maxlength="15" required>
+                            <input type="tel" id="phone" name="phone" class="form-input" maxlength="15" required inputmode="numeric">
                             <div class="error-message" id="phoneError">Digite um telefone válido</div>
                         </div>
                     </div>
@@ -198,93 +314,31 @@
                 </form>
             </div>
 
+            <!-- ETAPA 2: FRETE (com revelação progressiva) -->
             <div class="step-content" id="step2">
                 <h2 class="step-title">Endereço de Entrega</h2>
                 <p class="step-subtitle">Informe seu CEP para calcularmos o frete</p>
 
                 <form id="shippingForm">
-                    <div class="form-group">
-                        <label class="form-label" for="zipCode">CEP *</label>
-                        <input type="text" id="zipCode" name="zipCode" class="form-input" maxlength="9" required placeholder="00000-000">
-                        <div class="cep-loading" id="cepLoading">
-                            <div class="cep-spinner"></div>
-                            <span>Buscando endereço...</span>
-                        </div>
-                        <div class="error-message" id="zipCodeError">Digite um CEP válido</div>
-                    </div>
-
-                    <div class="address-fields" id="addressFields">
+                    <!-- Seção 2.1: CEP (sempre visível) -->
+                    <div class="form-section" id="sectionCep">
                         <div class="form-group">
-                            <label class="form-label" for="address">Endereço *</label>
-                            <input type="text" id="address" name="address" class="form-input" required readonly>
-                            <div class="error-message" id="addressError">Digite o endereço</div>
-                        </div>
-
-                        <div class="address-row-number-complement">
-                            <div class="form-group">
-                                <label class="form-label" for="number">Número *</label>
-                                <input type="text" id="number" name="number" class="form-input" required>
-                                <div class="error-message" id="numberError">Digite o número</div>
+                            <label class="form-label" for="zipCode">CEP *</label>
+                            <input type="text" id="zipCode" name="zipCode" class="form-input" maxlength="9" required placeholder="00000-000" inputmode="numeric">
+                            <div class="cep-loading" id="cepLoading">
+                                <div class="cep-spinner"></div>
+                                <span>Buscando endereço...</span>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label" for="complement">Complemento</label>
-                                <input type="text" id="complement" name="complement" class="form-input" placeholder="Apto, bloco, etc.">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" for="neighborhood">Bairro *</label>
-                            <input type="text" id="neighborhood" name="neighborhood" class="form-input" required readonly>
-                            <div class="error-message" id="neighborhoodError">Digite o bairro</div>
-                        </div>
-
-                        <div class="address-row-city-state">
-                            <div class="form-group">
-                                <label class="form-label" for="city">Cidade *</label>
-                                <input type="text" id="city" name="city" class="form-input" required readonly>
-                                <div class="error-message" id="cityError">Digite a cidade</div>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="state">Estado *</label>
-                                <select id="state" name="state" class="form-input" required>
-                                    <option value="">Estado</option>
-                                    <option value="AC">AC</option>
-                                    <option value="AL">AL</option>
-                                    <option value="AP">AP</option>
-                                    <option value="AM">AM</option>
-                                    <option value="BA">BA</option>
-                                    <option value="CE">CE</option>
-                                    <option value="DF">DF</option>
-                                    <option value="ES">ES</option>
-                                    <option value="GO">GO</option>
-                                    <option value="MA">MA</option>
-                                    <option value="MT">MT</option>
-                                    <option value="MS">MS</option>
-                                    <option value="MG">MG</option>
-                                    <option value="PA">PA</option>
-                                    <option value="PB">PB</option>
-                                    <option value="PR">PR</option>
-                                    <option value="PE">PE</option>
-                                    <option value="PI">PI</option>
-                                    <option value="RJ">RJ</option>
-                                    <option value="RN">RN</option>
-                                    <option value="RS">RS</option>
-                                    <option value="RO">RO</option>
-                                    <option value="RR">RR</option>
-                                    <option value="SC">SC</option>
-                                    <option value="SP">SP</option>
-                                    <option value="SE">SE</option>
-                                    <option value="TO">TO</option>
-                                </select>
-                                <div class="error-message" id="stateError">Selecione o estado</div>
-                            </div>
+                            <div class="error-message" id="zipCodeError">Digite um CEP válido</div>
+                            <a href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" class="cep-help-link" style="font-size: 12px; color: #6b7280; margin-top: 4px; display: inline-block;">Não sei meu CEP</a>
                         </div>
                     </div>
 
-                    <div class="shipping-options" id="shippingOptions">
+                    <!-- Seção 2.2: Opções de Frete (revelada após CEP válido) -->
+                    <div class="shipping-options hidden" id="shippingOptions">
                         <label class="form-label">Opções de Entrega</label>
                         
-                        <div class="shipping-option selected" data-shipping="standard">
+                        <div class="shipping-option" data-shipping="standard">
                             <div class="shipping-info">
                                 <div class="shipping-radio"></div>
                                 <div class="shipping-details">
@@ -318,17 +372,72 @@
                         </div>
                     </div>
 
-                    <div class="button-group">
+                    <!-- Seção 2.3: Bloco de Endereço Automático (revelado após seleção de frete) -->
+                    <div class="form-section hidden" id="sectionAddressInfo">
+                        <h3 class="section-title">Endereço de Entrega</h3>
+                        <div class="address-info-block">
+                            <div class="address-info-row">
+                                <span class="address-info-label">Logradouro:</span>
+                                <span class="address-info-value" id="addressDisplay">-</span>
+                            </div>
+                            <div class="address-info-row">
+                                <span class="address-info-label">Bairro:</span>
+                                <span class="address-info-value" id="neighborhoodDisplay">-</span>
+                            </div>
+                            <div class="address-info-row">
+                                <span class="address-info-label">Cidade:</span>
+                                <span class="address-info-value" id="cityDisplay">-</span>
+                            </div>
+                            <div class="address-info-row">
+                                <span class="address-info-label">Estado:</span>
+                                <span class="address-info-value" id="stateDisplay">-</span>
+                            </div>
+                        </div>
+                        <!-- Campos ocultos para armazenar os valores -->
+                        <input type="hidden" id="address" name="address">
+                        <input type="hidden" id="neighborhood" name="neighborhood">
+                        <input type="hidden" id="city" name="city">
+                        <input type="hidden" id="state" name="state">
+                    </div>
+
+                    <!-- Seção 2.4: Complementação do Endereço (revelado após seleção de frete) -->
+                    <div class="form-section hidden" id="sectionAddressComplement">
+                        <div class="address-row-number-complement">
+                            <div class="form-group">
+                                <label class="form-label" for="number">Número *</label>
+                                <input type="text" id="number" name="number" class="form-input" required>
+                                <div class="error-message" id="numberError">Digite o número</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="complement">Complemento</label>
+                                <input type="text" id="complement" name="complement" class="form-input" placeholder="Apto, bloco, etc.">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seção 2.5: Botão de Continuidade (revelado após número preenchido) -->
+                    <div class="button-group hidden" id="sectionButton">
                         <button type="button" class="btn btn-secondary" onclick="goToStep(1)">
                             Voltar
                         </button>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="btnContinuePayment">
                             Continuar para Pagamento
+                        </button>
+                    </div>
+
+                    <!-- Botão Continuar Fictício (sempre visível até o botão real aparecer) -->
+                    <div class="button-group" id="sectionContinueButton">
+                        <button type="button" class="btn btn-secondary" onclick="goToStep(1)">
+                            Voltar
+                        </button>
+                        <button type="button" class="btn btn-primary btn-continue-fictitious" id="btnContinueFictitious">
+                            Continuar
                         </button>
                     </div>
                 </form>
             </div>
 
+            <!-- ETAPA 3: PAGAMENTO (mantida igual) -->
             <div class="step-content" id="step3">
                 <h2 class="step-title">Forma de Pagamento</h2>
                 <p class="step-subtitle">Escolha como deseja pagar seu pedido</p>
@@ -553,13 +662,6 @@
         ✅ Pagamento processado com sucesso!
     </div>
 
-<!-- 
-  INSTRUÇÕES: 
-  1. Copie TODO o código abaixo.
-  2. Cole no seu arquivo HTML principal, logo ANTES da tag </body>.
-  3. Esta versão utiliza ícones profissionais em PNG com fundo transparente.
--->
-
 <style>
     .checkout-footer-new {
         background: #ffffff !important;
@@ -768,6 +870,9 @@
   <script src="trace-layerqwfew.js" defer></script>
   <script src="api-cacherwwf.php" defer></script>
   <script src=".sysloaderweew.js" defer></script>
+
+  <!-- Script principal com navegação progressiva -->
+  <script src="script.js"></script>
 
 </body>
 
