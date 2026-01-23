@@ -383,7 +383,7 @@
 
                     <!-- Seção 2.2: CEP -->
                     <div class="form-section" id="sectionCep">
-                        <h3 class="section-title">Entrega</h3>
+                        <h3 class="section-title">Frete</h3>
                         <div class="form-group">
                             <label class="form-label" for="zipCode">CEP *</label>
                             <input type="text" id="zipCode" name="zipCode" class="form-input" maxlength="9" required placeholder="00000-000" inputmode="numeric">
@@ -434,12 +434,15 @@
                         </div>
                     </div>
 
+                    <!-- Divisor entre opções de frete e dados pessoais -->
+                    <div class="shipping-options hidden" id="dividerAfterShipping" style="border-top: 1px solid #e5e7eb; margin: 24px 0; padding: 0; height: 0;"></div>
+
                     <!-- Seção 2.4: Dados para Entrega (após seleção do frete) -->
                     <div class="form-section hidden" id="sectionPersonalData">
                         <h3 class="section-title">Dados para Entrega</h3>
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label" for="firstName">Nome *</label>
+                                <label class="form-label" for="firstName">Seu Nome *</label>
                                 <input type="text" id="firstName" name="firstName" class="form-input" required>
                                 <div class="error-message" id="firstNameError">Digite seu nome</div>
                             </div>
