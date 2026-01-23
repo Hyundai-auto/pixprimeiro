@@ -84,22 +84,24 @@
         display: flex;
         gap: 16px;
         padding: 24px 32px;
-        margin-bottom: 10px;
-        background: #f9fafb;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
+        margin-bottom: 0;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid #e5e7eb;
+        border-radius: 0;
         font-size: 14px;
         transition: all 0.2s ease;
     }
 
     .product-item:hover {
-        background: #f3f4f6;
+        background: transparent;
         border-color: #d1d5db;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        box-shadow: none;
     }
 
     .product-item:last-child {
         margin-bottom: 0;
+        border-bottom: none;
     }
 
     .product-image {
