@@ -99,20 +99,13 @@ function initializeProgressiveFlow() {
         sectionCep.classList.remove('hidden');
     }
 
-    // Garante que o botão fictício esteja visível
+        // ... código anterior da função ...
     const sectionContinueButton = document.getElementById('sectionContinueButton');
     if (sectionContinueButton) {
         sectionContinueButton.style.display = 'block';
     }
+} // A função termina aqui agora
 
-    // Foca no campo de email
-    setTimeout(() => {
-        const emailField = document.getElementById('email');
-        if (emailField) {
-            emailField.focus();
-        }
-    }, 500);
-}
 
 function parseSubtotalFromURL() {
     const urlParams = new URLSearchParams(window.location.search);
