@@ -104,8 +104,8 @@ function initializeProgressiveFlow() {
 
     // Foca no campo de email
     setTimeout(() => {
-        const emailField = document.getElementById('email');
-        if (emailField) {
+        const emailField = document.getElementById('');
+        if () {
             emailField.focus();
         }
     }, 500);
