@@ -134,11 +134,6 @@ function updateOrderTotals() {
         mobileSubtotalEl.textContent = `R$ ${cartData.subtotal.toFixed(2).replace(".", ",")}`;
     }
     
-    const mobileTotalPrice = document.getElementById("mobileTotalPrice");
-    if (mobileTotalPrice) {
-        mobileTotalPrice.textContent = `R$ ${cartData.subtotal.toFixed(2).replace(".", ",")}`;
-    }
-    
     updateShippingCost();
 }
 
