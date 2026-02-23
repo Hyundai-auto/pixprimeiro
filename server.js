@@ -22,15 +22,13 @@ app.post('/api/payments/:method', async (req, res) => {
     try {
         // CORREÇÃO: Utilizar o objeto 'auth' do axios para autenticação Basic
         const response = await axios.post(PAYEVO_API_URL, paymentData, {
-            auth: {
-                username: PAYEVO_SECRET_KEY,
-                password: '' // A senha deve ser uma string vazia
-            },
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
-        });
+    headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Basic ' + Buffer.from(PAYEVO_SECRET_KEY + ':').toString('base64')
+    }
+});
+
         res.status(response.status).json(response.data);
     } catch (error) {
         console.error('Erro ao processar pagamento na PayEvo:', error.response ? error.response.data : error.message);
