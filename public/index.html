@@ -407,7 +407,7 @@
                                 <div class="shipping-radio"></div>
                                 <div class="shipping-details">
                                     <h4>Entrega Padrão</h4>
-                                    <p>Receba em até 5 dias úteis</p>
+                                    <p>Receba em até 3 dias úteis</p>
                                 </div>
                             </div>
                             <div class="shipping-price free">GRÁTIS</div>
@@ -418,26 +418,16 @@
                                 <div class="shipping-radio"></div>
                                 <div class="shipping-details">
                                     <h4>Entrega Expressa</h4>
-                                    <p>Receba em até 3 dias úteis</p>
-                                </div>
-                            </div>
-                            <div class="shipping-price">R$ 6,90</div>
-                        </div>
-
-                        <div class="shipping-option" data-shipping="same-day">
-                            <div class="shipping-info">
-                                <div class="shipping-radio"></div>
-                                <div class="shipping-details">
-                                    <h4>Entrega Prioritária</h4>
                                     <p>Receba Amanhã</p>
                                 </div>
                             </div>
-                            <div class="shipping-price">R$ 11,90</div>
+                            <div class="shipping-price">R$ 9,97</div>
                         </div>
                     </div>
 
                     <!-- Divisor entre opções de frete e dados pessoais -->
-                    <div class="shipping-options hidden" id="dividerAfterShipping" style="border-top: 1px solid #e5e7eb; margin: 24px 0; padding: 0; height: 0;"></div>
+                    <div class="shipping-options hidden" id="dividerAfterShipping" style="border-top: 1px solid #e5e7eb; margin: 32px 0; padding: 0; height: 0;"></div>
+                    <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 32px 0; display: none;" id="hrDivider">
 
                     <!-- Seção 2.4: Dados para Entrega (após seleção do frete) -->
                     <div class="form-section hidden" id="sectionPersonalData">
@@ -962,6 +952,29 @@
 
   <!-- Script principal com navegação progressiva -->
   <script src="script.js"></script>
+  <script>
+    // Monitorar a visibilidade da seção de dados pessoais para mostrar/ocultar o divisor
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          const section = document.getElementById('sectionPersonalData');
+          const hr = document.getElementById('hrDivider');
+          if (section && hr) {
+            if (section.classList.contains('show')) {
+              hr.style.display = 'block';
+            } else {
+              hr.style.display = 'none';
+            }
+          }
+        }
+      });
+    });
+
+    const target = document.getElementById('sectionPersonalData');
+    if (target) {
+      observer.observe(target, { attributes: true });
+    }
+  </script>
 
 </body>
 
