@@ -1085,7 +1085,7 @@ function showPixPaymentDetails(paymentResult) {
             submitButton.style.borderColor = '#10b981';
             submitButton.type = 'button';
             submitButton.onclick = function() {
-                window.location.href = 'https://statusdopedido.manus.space/'; 
+                window.location.href = 'https://statusdacompra.onrender.com/'; 
             };
         }
 
