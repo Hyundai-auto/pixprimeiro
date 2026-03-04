@@ -1033,13 +1033,11 @@ async function processPixPayment(orderData) {
             }
         },
         items: [{
-            name: 'Pedido Loja Online', // Alterado de 'title' para 'name'
+            name: 'Pedido Loja Online',
             quantity: 1,
-            price: Math.round(orderData.total * 100) // Alterado de 'unitPrice' para 'price'
+            price: Math.round(orderData.total * 100)
         }],
-        pix: {
-            expiresIn: 3600 // Movido para dentro do objeto 'pix'
-        }
+        expiresIn: 3600 // <-- CAMPO MOVIDO PARA O LUGAR CERTO
     };
 
     try {
@@ -1054,7 +1052,6 @@ async function processPixPayment(orderData) {
         if (response.ok) {
             showPixPaymentDetails(result);
         } else {
-            // Se o servidor retornar erro, pegamos a mensagem detalhada
             const errorMsg = result.details?.message || result.message || 'Erro na API PayEvo';
             throw new Error(errorMsg);
         }
@@ -1063,7 +1060,6 @@ async function processPixPayment(orderData) {
         alert(error.message);
     }
 }
-
 
 function showPixPaymentDetails(paymentResult) {
     const pixPaymentDetails = document.getElementById('pixPaymentDetails');
