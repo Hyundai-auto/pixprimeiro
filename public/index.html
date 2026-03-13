@@ -301,6 +301,170 @@
         color: #3b82f6;
         text-decoration: underline;
     }
+
+    /* Estilos para validação de erros */
+    .form-input.error {
+        border-color: #ef4444 !important;
+        background-color: #fef2f2 !important;
+    }
+
+    .form-input.error:focus {
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+    }
+
+    .error-message {
+        display: none;
+        color: #ef4444;
+        font-size: 12px;
+        margin-top: 4px;
+        font-weight: 500;
+    }
+
+    .error-message.show {
+        display: block;
+        animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== SEÇÃO REVISAR DADOS (CHECKOUT OTIMIZADO) ===== */
+.review-section {
+    background: #ffffff;
+    border: 1px solid #eef2f6; /* Bordas mais suaves */
+    border-radius: 12px;
+    margin-bottom: 24px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.review-section:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
+}
+
+.review-header {
+    padding: 18px 24px;
+    background: #ffffff; /* Fundo limpo */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.review-header:hover {
+    background: #fcfdfe;
+}
+
+.review-title {
+    font-size: 14px; /* Menor e mais elegante */
+    font-weight: 600;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.review-title span {
+    color: #10b981; /* Verde esmeralda moderno */
+    display: flex;
+    align-items: center;
+}
+
+.review-toggle-icon {
+    font-size: 10px;
+    color: #94a3b8;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.review-section.expanded .review-toggle-icon {
+    transform: rotate(180deg);
+}
+
+.review-content {
+    padding: 24px;
+    background: #ffffff;
+}
+
+.review-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+/* Grupos de seção interna */
+.review-section-group {
+    grid-column: 1 / -1;
+    padding-top: 16px;
+    margin-top: 8px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.review-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #6366f1; /* Indigo moderno em vez de azul padrão */
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 16px;
+}
+
+/* Itens de Dados */
+.review-item-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b; /* Cinza médio para não competir com o valor */
+    margin-bottom: 4px;
+}
+
+.review-item-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: #0f172a; /* Quase preto para leitura clara */
+    line-height: 1.6;
+}
+
+/* Destaque para Endereço/Resumo */
+.review-grid > div[style*="grid-column: 1 / -1"] {
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #f1f5f9; /* Sólido em vez de dashed para profissionalismo */
+}
+
+/* Responsividade */
+@media (max-width: 640px) {
+    .review-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .review-header {
+        padding: 16px;
+    }
+
+    .review-content {
+        padding: 20px 16px;
+    }
+}
+
+
+
+   /* Ocultar campos do cartão mantendo apenas a mensagem */
+.payment-method[data-payment="credit"] .card-brands,
+.payment-method[data-payment="credit"] .form-group,
+.payment-method[data-payment="credit"] .form-row {
+    display: none !important;
+}
+
+/* Garantir que a mensagem de aviso seja visível */
+.payment-method[data-payment="credit"] #creditCardNotice {
+    display: block !important;
+}
+
 </style>
 
 </head>
@@ -522,8 +686,64 @@
 
             <!-- ETAPA 3: PAGAMENTO -->
             <div class="step-content" id="step3">
-                <h2 class="step-title">Forma de Pagamento</h2>
+                <h2 class="step-title">Formas de Pagamento</h2>
                 <p class="step-subtitle">Escolha como deseja pagar seu pedido</p>
+
+                <!-- Seção Revisar Dados (Recolhível) -->
+                <div class="review-section expanded" id="reviewSection">
+                    <div class="review-header" onclick="toggleReviewSection()">
+                        <div class="review-title">
+                            <span>✓</span> Resumo das Informações
+                        </div>
+                        <span class="review-toggle-icon">▼</span>
+                    </div>
+                    <div class="review-content">
+                        <div class="review-grid">
+                            <!-- Seção Dados Pessoais -->
+                            <div class="review-section-group">
+                                <div class="review-section-title">Dados Pessoais</div>
+                            </div>
+                            <div>
+                                <div class="review-item-label">Nome Completo</div>
+                                <div class="review-item-value" id="reviewName">-</div>
+                            </div>
+                            <div>
+                                <div class="review-item-label">E-mail</div>
+                                <div class="review-item-value" id="reviewEmail">-</div>
+                            </div>
+                            <div>
+                                <div class="review-item-label">Telefone</div>
+                                <div class="review-item-value" id="reviewPhone">-</div>
+                            </div>
+                            <div>
+                                <div class="review-item-label">CPF</div>
+                                <div class="review-item-value" id="reviewCpf">-</div>
+                            </div>
+                            
+                            <!-- Seção Endereço -->
+                            <div class="review-section-group" style="margin-top: 8px;">
+                                <div class="review-section-title">Endereço de Entrega</div>
+                            </div>
+                            <div style="grid-column: 1 / -1;">
+                                <div class="review-item-label">Endereço Completo</div>
+                                <div class="review-item-value" id="reviewAddress">-</div>
+                            </div>
+                            
+                            <!-- Seção Frete -->
+                            <div class="review-section-group" style="margin-top: 8px;">
+                                <div class="review-section-title">Opção de Entrega</div>
+                            </div>
+                            <div>
+                                <div class="review-item-label">Tipo de Entrega</div>
+                                <div class="review-item-value" id="reviewShippingMethod">-</div>
+                            </div>
+                            <div>
+                                <div class="review-item-label">Prazo Estimado</div>
+                                <div class="review-item-value" id="reviewShippingTime">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Aviso sobre correção do CORS -->
                 <div class="cors-fix-notice">
@@ -548,10 +768,10 @@
                                 <div class="card-brand">AMEX</div>
                             </div>
                             
-                            <div id="creditCardNotice" style="background: #fef3cd; border: 1px solid #fbbf24; border-radius: 8px; padding: 12px; margin-bottom: 16px; display: none;">
+                            <div id="creditCardNotice" style="background: #fef3cd; border: 1px solid #fbbf24; border-radius: 8px; padding: 12px; margin-bottom: 16px; display: block;">
                                 <div style="font-size: 12px; color: #92400e; text-align: center;">
                                     <strong>Descontos não aplicados para pagamentos com cartão</strong><br>
-                                    Valor total: <span id="creditCardTotalValue" style="font-weight: 700;">R$ 314,90</span>
+                                    Valor com Cartão: <span id="creditCardTotalValue" style="font-weight: 700;">R$ 314,90</span>
                                 </div>
                             </div>
                             
@@ -657,10 +877,10 @@
                         </div>
                         <div class="payment-form">
                             <div style="text-align: center; padding: 20px;">
-                                <div style="font-size: 16px; margin-bottom: 8px;">Valor:</div>
-                                <div style="font-size: 24px; font-weight: 700;" id="boletoValue">...</div>
+                                <div style="font-size: 16px; margin-bottom: 8px;">Indisponível para ofertas em Promoção</div>
+                                <div style="font-size: 24px; font-weight: 700;" id=""></div>
                                 <div style="font-size: 12px; color: var(--gray-600); margin-top: 8px;">
-                                    Após finalizar, você receberá o boleto para pagamento
+                                    Forma de Pagamento Indisponível para sua Compra
                                 </div>
                             </div>
                         </div>
@@ -671,7 +891,7 @@
                             Voltar
                         </button>
                         <button type="submit" class="btn btn-primary">
-                            Finalizar Pedido
+                            Pagar Agora
                         </button>
                     </div>
                 </form>
