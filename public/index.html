@@ -465,6 +465,12 @@
     display: block !important;
 }
 
+   .btn-primary:disabled {
+    background: linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 </style>
 
 </head>
@@ -887,13 +893,13 @@
                     </div>
 
                     <div class="button-group">
-                        <button type="button" class="btn btn-secondary" onclick="goToStep(2)">
-                            Voltar
-                        </button>
-                        <button type="submit" class="btn btn-primary">
-                            Pagar Agora
-                        </button>
-                    </div>
+    <button type="button" class="btn btn-secondary" onclick="goToStep(2)">
+        Voltar
+    </button>
+    <button type="submit" class="btn btn-primary" id="submitButton">
+        Pagar Agora
+    </button>
+</div>
                 </form>
             </div>
         </main>
@@ -1195,6 +1201,119 @@
       observer.observe(target, { attributes: true });
     }
   </script>
+
+  <script>
+    // ========================================
+    // LÓGICA DE HABILITAÇÃO/DESABILITAÇÃO DO BOTÃO
+    // ========================================
+    
+    /**
+     * Função para atualizar o estado do botão de pagamento
+     * O botão só fica habilitado quando PIX está selecionado
+     */
+    function updatePaymentButtonState() {
+        const paymentForm = document.getElementById('paymentForm');
+        const submitButton = document.getElementById('submitButton');
+        
+        // Encontra o método de pagamento selecionado
+        const selectedPaymentMethod = paymentForm.querySelector('.payment-method.selected');
+        const selectedPaymentType = selectedPaymentMethod ? selectedPaymentMethod.getAttribute('data-payment') : null;
+        
+        // Desabilita o botão se não for PIX
+        if (selectedPaymentType !== 'pix') {
+            submitButton.disabled = true;
+            submitButton.title = 'Selecione PIX para continuar'; // Dica ao passar o mouse
+        } else {
+            submitButton.disabled = false;
+            submitButton.title = ''; // Remove a dica
+        }
+    }
+
+    /**
+     * Adiciona listeners aos métodos de pagamento
+     */
+    function setupPaymentMethodListeners() {
+        const paymentMethods = document.querySelectorAll('.payment-method');
+        
+        paymentMethods.forEach(method => {
+            method.addEventListener('click', function() {
+                // Remove a classe 'selected' de todos os métodos
+                paymentMethods.forEach(m => m.classList.remove('selected'));
+                
+                // Adiciona a classe 'selected' ao método clicado
+                this.classList.add('selected');
+                
+                // Atualiza o estado do botão
+                updatePaymentButtonState();
+            });
+        });
+    }
+
+    /**
+     * Manipulador de submissão do formulário
+     * Modificado para verificar a seleção do PIX antes de prosseguir
+     */
+    document.getElementById('paymentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Verifica se PIX está selecionado
+        const selectedPaymentMethod = this.querySelector('.payment-method.selected');
+        if (selectedPaymentMethod.getAttribute('data-payment') !== 'pix') {
+            alert('Por favor, selecione PIX para continuar');
+            return;
+        }
+        
+        // Se PIX estiver selecionado, prossegue com a lógica de pagamento (simulada aqui)
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        loadingOverlay.classList.add('show');
+        
+        setTimeout(() => {
+            loadingOverlay.classList.remove('show');
+            const successNotification = document.getElementById('successNotification');
+            successNotification.classList.add('show');
+            setTimeout(() => {
+                successNotification.classList.remove('show');
+            }, 3000);
+        }, 2000);
+    });
+
+    /**
+     * Inicializa o script quando o DOM está pronto
+     */
+    document.addEventListener('DOMContentLoaded', function() {
+        setupPaymentMethodListeners();
+        updatePaymentButtonState(); // Define o estado inicial do botão
+    });
+
+    // Funções auxiliares (manter as existentes ou adicionar se necessário)
+    function goToStep(step) {
+        console.log('Voltando para etapa:', step);
+        // Implementar navegação entre etapas conforme necessário
+    }
+
+    function copyPixCode() {
+        const pixCodeText = document.getElementById('pixCodeText').textContent;
+        if (pixCodeText) {
+            navigator.clipboard.writeText(pixCodeText).then(() => {
+                alert('Código PIX copiado com sucesso!');
+            }).catch(() => {
+                alert('Erro ao copiar o código PIX');
+            });
+        }
+    }
+
+    function applyCoupon() {
+        const discountInput = document.getElementById('discountInput');
+        const couponCode = discountInput.value;
+        if (couponCode) {
+            alert('Cupom "' + couponCode + '" aplicado com sucesso!');
+            discountInput.value = '';
+        } else {
+            alert('Digite um cupom válido');
+        }
+    }
+</script>
+
 
 </body>
 
