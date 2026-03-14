@@ -1249,6 +1249,40 @@
         });
     }
 
+    // Função para formatar CPF e fechar o teclado automaticamente
+document.addEventListener('DOMContentLoaded', function() {
+    const cpfInput = document.getElementById('cpf');
+    
+    if (cpfInput) {
+        cpfInput.addEventListener('input', function(e) {
+            let value = this.value;
+            
+            // 1. Remove tudo que não é número
+            value = value.replace(/\D/g, '');
+            
+            // 2. Limita a 11 dígitos
+            value = value.substring(0, 11);
+            
+            // 3. Aplica a máscara: XXX.XXX.XXX-XX
+            if (value.length > 9) {
+                value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+            } else if (value.length > 6) {
+                value = value.replace(/(\d{3})(\d{3})(\d{3})/, "$1.$2.$3");
+            } else if (value.length > 3) {
+                value = value.replace(/(\d{3})(\d{3})/, "$1.$2");
+            }
+            
+            this.value = value;
+            
+            // 4. FECHA O TECLADO: Se o CPF estiver completo (14 caracteres com a máscara)
+            if (this.value.length === 14) {
+                this.blur(); // Remove o foco e esconde o teclado
+            }
+        });
+    }
+});
+
+
     /**
      * Manipulador de submissão do formulário
      * Modificado para verificar a seleção do PIX antes de prosseguir
